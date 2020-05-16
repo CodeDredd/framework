@@ -7,7 +7,6 @@ use function GuzzleHttp\Promise\promise_for;
 use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class Factory
 {
@@ -164,6 +163,26 @@ class Factory
     }
 
     /**
+     *  Return stubbed response sequences
+     *
+     * @return array
+     */
+    public function getResponseSequences()
+    {
+        return $this->responseSequences;
+    }
+
+    /**
+     * Return recorded response pairs
+     *
+     * @return array
+     */
+    public function getRecorded()
+    {
+        return $this->recorded;
+    }
+
+    /**
      * Record a request response pair.
      *
      * @param  \Illuminate\Http\Client\Request  $request
@@ -174,73 +193,6 @@ class Factory
     {
         if ($this->recording) {
             $this->recorded[] = [$request, $response];
-        }
-    }
-
-    /**
-     * Assert that a request / response pair was recorded matching a given truth test.
-     *
-     * @param  callable  $callback
-     * @return void
-     */
-    public function assertSent($callback)
-    {
-        PHPUnit::assertTrue(
-            $this->recorded($callback)->count() > 0,
-            'An expected request was not recorded.'
-        );
-    }
-
-    /**
-     * Assert that a request / response pair was not recorded matching a given truth test.
-     *
-     * @param  callable  $callback
-     * @return void
-     */
-    public function assertNotSent($callback)
-    {
-        PHPUnit::assertFalse(
-            $this->recorded($callback)->count() > 0,
-            'Unexpected request was recorded.'
-        );
-    }
-
-    /**
-     * Assert that no request / response pair was recorded.
-     *
-     * @return void
-     */
-    public function assertNothingSent()
-    {
-        PHPUnit::assertEmpty(
-            $this->recorded,
-            'Requests were recorded.'
-        );
-    }
-
-    /**
-     * Assert how many requests have been recorded.
-     *
-     * @param $count
-     * @return void
-     */
-    public function assertSentCount($count)
-    {
-        PHPUnit::assertCount($count, $this->recorded);
-    }
-
-    /**
-     * Assert that every created response sequence is empty.
-     *
-     * @return void
-     */
-    public function assertSequencesAreEmpty()
-    {
-        foreach ($this->responseSequences as $responseSequence) {
-            PHPUnit::assertTrue(
-                $responseSequence->isEmpty(),
-                'Not all response sequences are empty.'
-            );
         }
     }
 
@@ -276,6 +228,10 @@ class Factory
     {
         if (static::hasMacro($method)) {
             return $this->macroCall($method, $parameters);
+        }
+
+        if (Str::contains($method, 'assert')) {
+            return (new Testing($this))->{$method}(...$parameters);
         }
 
         return tap(new PendingRequest($this), function ($request) {
