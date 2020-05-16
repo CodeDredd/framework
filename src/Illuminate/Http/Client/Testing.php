@@ -17,7 +17,7 @@ class Testing
     protected $factory;
 
     /**
-     * Create a new HTTP Client instance.
+     * Create a new HTTP Testing instance.
      *
      * @param  \Illuminate\Http\Client\Factory|null  $factory
      * @return void
